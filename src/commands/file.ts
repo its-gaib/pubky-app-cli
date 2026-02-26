@@ -2,7 +2,7 @@ import { Command } from "commander";
 import * as fs from "fs";
 import * as path from "path";
 import chalk from "chalk";
-import { withSession, withPublicAccess, getPublicKeyZ32 } from "../client";
+import { withSession, withPublicAccess, getPublicKeyZ32, stripPubkyPrefix } from "../client";
 
 export function registerFileCommands(program: Command): void {
   const file = program.command("file").description("Manage files");
@@ -68,7 +68,7 @@ export function registerFileCommands(program: Command): void {
     .option("--user <pk>", "User public key (z32). Defaults to your own.")
     .option("--limit <n>", "Limit results", "20")
     .action(async (opts: any) => {
-      const userPk = opts.user || getPublicKeyZ32();
+      const userPk = opts.user ? stripPubkyPrefix(opts.user) : getPublicKeyZ32();
       const limit = parseInt(opts.limit, 10);
 
       await withPublicAccess(async ({ publicStorage }) => {

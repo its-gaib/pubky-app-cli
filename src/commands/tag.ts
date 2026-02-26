@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { withSession, withPublicAccess, getPublicKeyZ32 } from "../client";
+import { withSession, withPublicAccess, getPublicKeyZ32, stripPubkyPrefix } from "../client";
 
 export function registerTagCommands(program: Command): void {
   const tag = program.command("tag").description("Manage tags");
@@ -28,7 +28,7 @@ export function registerTagCommands(program: Command): void {
     .option("--user <pk>", "User public key (z32). Defaults to your own.")
     .option("--limit <n>", "Limit results", "20")
     .action(async (opts: any) => {
-      const userPk = opts.user || getPublicKeyZ32();
+      const userPk = opts.user ? stripPubkyPrefix(opts.user) : getPublicKeyZ32();
       const limit = parseInt(opts.limit, 10);
 
       await withPublicAccess(async ({ publicStorage }) => {

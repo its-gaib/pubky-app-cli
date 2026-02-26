@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { withSession, withPublicAccess, getPublicKeyZ32 } from "../client";
+import { withSession, withPublicAccess, getPublicKeyZ32, stripPubkyPrefix } from "../client";
 
 export function registerFollowCommands(program: Command): void {
   const follow = program.command("follow").description("Follow/unfollow users");
@@ -9,7 +9,8 @@ export function registerFollowCommands(program: Command): void {
     .command("add")
     .description("Follow a user")
     .argument("<user-pk>", "Public key (z32) of the user to follow")
-    .action(async (userPk: string) => {
+    .action(async (rawPk: string) => {
+      const userPk = stripPubkyPrefix(rawPk);
       await withSession(async (ctx) => {
         const { follow, meta } = ctx.specs.createFollow(userPk);
         await ctx.session.storage.putJson(meta.path, follow.toJson());
@@ -22,7 +23,8 @@ export function registerFollowCommands(program: Command): void {
     .command("remove")
     .description("Unfollow a user")
     .argument("<user-pk>", "Public key (z32) of the user to unfollow")
-    .action(async (userPk: string) => {
+    .action(async (rawPk: string) => {
+      const userPk = stripPubkyPrefix(rawPk);
       await withSession(async (ctx) => {
         const followPath = `/pub/pubky.app/follows/${userPk}`;
         await ctx.session.storage.delete(followPath);
@@ -36,7 +38,7 @@ export function registerFollowCommands(program: Command): void {
     .option("--user <pk>", "User public key (z32). Defaults to your own.")
     .option("--limit <n>", "Limit results", "50")
     .action(async (opts: any) => {
-      const userPk = opts.user || getPublicKeyZ32();
+      const userPk = opts.user ? stripPubkyPrefix(opts.user) : getPublicKeyZ32();
       const limit = parseInt(opts.limit, 10);
 
       await withPublicAccess(async ({ publicStorage }) => {

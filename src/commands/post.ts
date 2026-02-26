@@ -3,7 +3,7 @@ import { PubkyAppPostKind, PubkyAppPost } from "pubky-app-specs";
 import * as fs from "fs";
 import * as path from "path";
 import chalk from "chalk";
-import { withSession, withPublicAccess, getPublicKeyZ32 } from "../client";
+import { withSession, withPublicAccess, getPublicKeyZ32, stripPubkyPrefix } from "../client";
 
 function resolveContent(content: string | undefined, fileOpt: string | undefined): string {
   if (fileOpt) {
@@ -159,7 +159,7 @@ export function registerPostCommands(program: Command): void {
     .option("--limit <n>", "Limit number of results", "10")
     .option("--reverse", "Reverse order (oldest first)")
     .action(async (opts: any) => {
-      const userPk = opts.user || getPublicKeyZ32();
+      const userPk = opts.user ? stripPubkyPrefix(opts.user) : getPublicKeyZ32();
       const limit = parseInt(opts.limit, 10);
 
       await withPublicAccess(async ({ publicStorage }) => {

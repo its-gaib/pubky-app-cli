@@ -62,3 +62,12 @@ export function getPublicKeyZ32(): string {
   const keypair = seedToKeypair(config.seed);
   return keypair.publicKey.z32();
 }
+
+/**
+ * Strip the "pubky" prefix from a public key if present.
+ * Accepts both "pubkygujx6qd8ks..." and "gujx6qd8ks..." formats,
+ * always returns the raw z32 key.
+ */
+export function stripPubkyPrefix(pk: string): string {
+  return pk.startsWith("pubky") ? pk.slice(5) : pk;
+}

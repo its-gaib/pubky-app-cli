@@ -3,6 +3,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { saveConfig, showConfig, setConfigOverrides } from "./config";
+import { stripPubkyPrefix } from "./client";
 import { registerPostCommands } from "./commands/post";
 import { registerProfileCommands } from "./commands/profile";
 import { registerTagCommands } from "./commands/tag";
@@ -30,7 +31,7 @@ config
   .action((opts: any) => {
     const updates: any = {};
     if (opts.seed) updates.seed = opts.seed;
-    if (opts.homeserver) updates.homeserver = opts.homeserver;
+    if (opts.homeserver) updates.homeserver = stripPubkyPrefix(opts.homeserver);
 
     if (Object.keys(updates).length === 0) {
       console.error("Provide at least one of: --seed, --homeserver");
@@ -62,7 +63,7 @@ program.hook("preAction", () => {
   const opts = program.opts();
   const overrides: any = {};
   if (opts.seed) overrides.seed = opts.seed;
-  if (opts.homeserver) overrides.homeserver = opts.homeserver;
+  if (opts.homeserver) overrides.homeserver = stripPubkyPrefix(opts.homeserver);
   if (Object.keys(overrides).length > 0) {
     setConfigOverrides(overrides);
   }

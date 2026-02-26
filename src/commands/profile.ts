@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { withSession, withPublicAccess, getPublicKeyZ32 } from "../client";
+import { withSession, withPublicAccess, getPublicKeyZ32, stripPubkyPrefix } from "../client";
 
 export function registerProfileCommands(program: Command): void {
   const profile = program.command("profile").description("Manage user profile");
@@ -10,7 +10,7 @@ export function registerProfileCommands(program: Command): void {
     .description("Get a user profile")
     .argument("[user-pk]", "User public key (z32). Defaults to your own.")
     .action(async (userPk?: string) => {
-      const pk = userPk || getPublicKeyZ32();
+      const pk = userPk ? stripPubkyPrefix(userPk) : getPublicKeyZ32();
 
       await withPublicAccess(async ({ publicStorage }) => {
         const address = `pubky${pk}/pub/pubky.app/profile.json`;
