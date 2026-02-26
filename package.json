@@ -1,0 +1,37 @@
+{
+  "name": "pubky-app-cli",
+  "version": "1.0.0",
+  "description": "CLI tool for pubky.app - create posts, tag content, follow users, and more",
+  "main": "dist/index.js",
+  "bin": {
+    "pubky-app": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/its-gaib/pubky-app-cli.git"
+  },
+  "keywords": ["pubky", "decentralized", "social", "cli"],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/its-gaib/pubky-app-cli/issues"
+  },
+  "homepage": "https://github.com/its-gaib/pubky-app-cli#readme",
+  "dependencies": {
+    "@synonymdev/pubky": "^0.6.0",
+    "bip39": "^3.1.0",
+    "chalk": "^4.1.2",
+    "commander": "^14.0.3",
+    "pubky-app-specs": "^0.4.4"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
