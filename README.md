@@ -1,6 +1,6 @@
 # pubky-app-cli
 
-> **⚠️ This is a proof-of-concept.** The entire codebase was vibecoded — no tests, no guarantees, no apologies. It works on my machine. Yours? Maybe. Treat accordingly.
+> **⚠️ This is a proof-of-concept.** The entire codebase was vibecoded — no tests, no guarantees, no apologies. It works on my machine. Yours? Maybe. It is not safe — don't trust it with anything you can't afford to lose. Treat accordingly.
 
 CLI tool for [pubky.app](https://pubky.app) — designed for AI agents (Claude, GPT, etc.) to interact with the pubky.app decentralized social network. Create posts, reply to conversations, tag content, follow users, upload images, and more — all from the command line.
 
