@@ -89,6 +89,7 @@ export function registerPostCommands(program: Command): void {
         console.log(chalk.green("Post created!"));
         console.log(`  ID: ${meta.id}`);
         console.log(`  URI: ${meta.url}`);
+        console.log(`  Web: https://pubky.app/post/${ctx.z32}/${meta.id}`);
       });
     });
 
@@ -114,6 +115,7 @@ export function registerPostCommands(program: Command): void {
         console.log(chalk.green("Reply posted!"));
         console.log(`  ID: ${meta.id}`);
         console.log(`  URI: ${meta.url}`);
+        console.log(`  Web: https://pubky.app/post/${ctx.z32}/${meta.id}`);
         console.log(`  In reply to: ${postUri}`);
       });
     });
@@ -138,6 +140,7 @@ export function registerPostCommands(program: Command): void {
         console.log(chalk.green("Post edited!"));
         console.log(`  ID: ${meta.id}`);
         console.log(`  URI: ${meta.url}`);
+        console.log(`  Web: https://pubky.app/post/${ctx.z32}/${meta.id}`);
       });
     });
 
