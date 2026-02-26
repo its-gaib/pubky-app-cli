@@ -3,7 +3,7 @@ import { PubkyAppPostKind, PubkyAppPost } from "pubky-app-specs";
 import * as fs from "fs";
 import * as path from "path";
 import chalk from "chalk";
-import { withSession, withPublicAccess, getPublicKeyZ32, stripPubkyPrefix } from "../client";
+import { withSession, withPublicAccess, getPublicKeyZ32, stripPubkyPrefix, webUrlToPubkyUri } from "../client";
 
 function resolveContent(content: string | undefined, fileOpt: string | undefined): string {
   if (fileOpt) {
@@ -95,11 +95,12 @@ export function registerPostCommands(program: Command): void {
   post
     .command("reply")
     .description("Reply to a post")
-    .argument("<post-uri>", "URI of the post to reply to")
+    .argument("<post-uri>", "URI or pubky.app URL of the post to reply to")
     .argument("[content]", "Reply content (supports \\n for newlines)")
     .option("-f, --file <path>", "Read content from a file instead")
     .option("--image <paths...>", "Attach images (local file paths)")
     .action(async (postUri: string, content: string | undefined, opts: any) => {
+      postUri = webUrlToPubkyUri(postUri);
       const body = resolveContent(content, opts.file);
 
       await withSession(async (ctx) => {
@@ -200,8 +201,9 @@ export function registerPostCommands(program: Command): void {
   post
     .command("read")
     .description("Read a specific post")
-    .argument("<uri>", "Post URI (pubky://...)")
+    .argument("<uri>", "Post URI (pubky://...) or pubky.app URL")
     .action(async (uri: string) => {
+      uri = webUrlToPubkyUri(uri);
       await withPublicAccess(async ({ publicStorage }) => {
         // Convert pubky:// URI to address format
         const address = uri.replace("pubky://", "pubky");

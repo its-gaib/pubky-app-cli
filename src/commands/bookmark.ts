@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { withSession, withPublicAccess, getPublicKeyZ32 } from "../client";
+import { withSession, withPublicAccess, getPublicKeyZ32, webUrlToPubkyUri } from "../client";
 
 export function registerBookmarkCommands(program: Command): void {
   const bookmark = program.command("bookmark").description("Manage bookmarks");
@@ -8,8 +8,9 @@ export function registerBookmarkCommands(program: Command): void {
   bookmark
     .command("add")
     .description("Bookmark a resource")
-    .argument("<uri>", "URI to bookmark")
+    .argument("<uri>", "URI or pubky.app URL to bookmark")
     .action(async (uri: string) => {
+      uri = webUrlToPubkyUri(uri);
       await withSession(async (ctx) => {
         const { bookmark, meta } = ctx.specs.createBookmark(uri);
         await ctx.session.storage.putJson(meta.path, bookmark.toJson());

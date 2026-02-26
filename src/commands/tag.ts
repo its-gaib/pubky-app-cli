@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { withSession, withPublicAccess, getPublicKeyZ32, stripPubkyPrefix } from "../client";
+import { withSession, withPublicAccess, getPublicKeyZ32, stripPubkyPrefix, webUrlToPubkyUri } from "../client";
 
 export function registerTagCommands(program: Command): void {
   const tag = program.command("tag").description("Manage tags");
@@ -8,9 +8,10 @@ export function registerTagCommands(program: Command): void {
   tag
     .command("add")
     .description("Tag a resource")
-    .argument("<uri>", "URI of the resource to tag")
+    .argument("<uri>", "URI or pubky.app URL of the resource to tag")
     .argument("<label>", "Tag label (1-20 chars, lowercase, no commas/colons)")
     .action(async (uri: string, label: string) => {
+      uri = webUrlToPubkyUri(uri);
       await withSession(async (ctx) => {
         const { tag, meta } = ctx.specs.createTag(uri, label);
         await ctx.session.storage.putJson(meta.path, tag.toJson());

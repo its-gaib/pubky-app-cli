@@ -71,3 +71,22 @@ export function getPublicKeyZ32(): string {
 export function stripPubkyPrefix(pk: string): string {
   return pk.startsWith("pubky") ? pk.slice(5) : pk;
 }
+
+/**
+ * Convert a pubky.app web URL to a pubky:// URI.
+ * Passes through any input that isn't a recognized web URL.
+ */
+export function webUrlToPubkyUri(input: string): string {
+  if (!input.startsWith("https://pubky.app/")) return input;
+  const path = input.replace("https://pubky.app/", "");
+  const parts = path.split("/");
+  // https://pubky.app/post/<pk>/<post_id>
+  if (parts[0] === "post" && parts.length >= 3) {
+    return `pubky://${parts[1]}/pub/pubky.app/posts/${parts[2]}`;
+  }
+  // https://pubky.app/profile/<pk>
+  if (parts[0] === "profile" && parts.length >= 2) {
+    return `pubky://${parts[1]}/pub/pubky.app/profile.json`;
+  }
+  return input;
+}
