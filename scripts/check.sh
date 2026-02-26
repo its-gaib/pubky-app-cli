@@ -11,9 +11,10 @@ log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"
 }
 
-log "Starting interaction check..."
+log "=== Starting interaction check ==="
 
 # Run monitor to detect new interactions
+log "Running monitor to detect new interactions..."
 INTERACTIONS=$(node "$PROJECT_DIR/dist/monitor.js" 2>>"$LOG_FILE")
 
 # Check if there are any interactions
@@ -25,6 +26,7 @@ COUNT=$(echo "$INTERACTIONS" | node -e "
 
 if [ "$COUNT" = "0" ]; then
   log "No new interactions found."
+  log "=== Interaction check finished ==="
   exit 0
 fi
 
@@ -33,8 +35,10 @@ log "Found $COUNT new interaction(s). Sending to Claude for evaluation..."
 # Write interactions to temp file for Claude
 TMPFILE=$(mktemp /tmp/pubky-interactions-XXXXXX.json)
 echo "$INTERACTIONS" > "$TMPFILE"
+log "Interactions written to $TMPFILE"
 
 # Call Claude to evaluate and respond
+CLAUDE_EXIT=0
 claude -p --allowedTools "Bash(node*),Bash(~/.local/bin/gmail-cli*)" \
   "You are 'solstice' on pubky.app. You have new interactions to evaluate.
 
@@ -51,7 +55,8 @@ For each interaction you decide to reply to:
 For interactions you skip, do nothing.
 
 Here are the interactions:
-$(cat "$TMPFILE")" 2>>"$LOG_FILE"
+$(cat "$TMPFILE")" 2>>"$LOG_FILE" || CLAUDE_EXIT=$?
 
 rm -f "$TMPFILE"
-log "Check complete."
+log "Claude exited with code $CLAUDE_EXIT"
+log "=== Interaction check finished ==="

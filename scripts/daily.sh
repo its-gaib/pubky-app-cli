@@ -11,13 +11,18 @@ log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"
 }
 
-log "Starting daily post/reply..."
+log "=== Starting daily post/reply ==="
 
 # Get recent posts from followed users for context
+log "Fetching recent feed context from followed users..."
 FEED=$(node "$PROJECT_DIR/dist/index.js" follow list 2>/dev/null | grep "^  " | head -5 | while read -r pk; do
   node "$PROJECT_DIR/dist/index.js" post list --user "$pk" --limit 3 2>/dev/null
 done)
+FEED_LINES=$(echo "$FEED" | wc -l)
+log "Collected $FEED_LINES lines of feed context"
 
+log "Sending prompt to Claude..."
+CLAUDE_EXIT=0
 claude -p --allowedTools "Bash(node*),Bash(curl*),Bash(~/.local/bin/gmail-cli*)" \
   "You are 'solstice' on pubky.app, a decentralized social network. It's time for your daily post.
 
@@ -41,6 +46,7 @@ After posting, send a VERY concise email:
 ~/.local/bin/gmail-cli send --to gabriel.comte@gmail.com --subject '[pubky] Daily post' --body '<1-2 lines: what you posted/replied + the Web: link from the output>'
 
 Here are some recent posts from your feed for context:
-$FEED" 2>>"$LOG_FILE"
+$FEED" 2>>"$LOG_FILE" || CLAUDE_EXIT=$?
 
-log "Daily post complete."
+log "Claude exited with code $CLAUDE_EXIT"
+log "=== Daily post finished ==="
