@@ -18,6 +18,38 @@ function resolveContent(content: string | undefined, fileOpt: string | undefined
   return content.replace(/\\n/g, "\n");
 }
 
+async function uploadImages(ctx: any, imagePaths: string[]): Promise<string[]> {
+  const attachments: string[] = [];
+  for (const imgPath of imagePaths) {
+    const absPath = path.resolve(imgPath);
+    const data = fs.readFileSync(absPath);
+    const ext = path.extname(absPath).toLowerCase();
+    const mimeMap: Record<string, string> = {
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".gif": "image/gif",
+      ".webp": "image/webp",
+      ".svg": "image/svg+xml",
+    };
+    const contentType = mimeMap[ext] || "application/octet-stream";
+    const fileName = path.basename(absPath);
+
+    const blobResult = ctx.specs.createBlob(Array.from(new Uint8Array(data)));
+    await ctx.session.storage.putBytes(blobResult.meta.path, new Uint8Array(data));
+    console.log(chalk.dim(`  Blob uploaded: ${blobResult.meta.url}`));
+
+    const fileResult = ctx.specs.createFile(
+      fileName, blobResult.meta.url, contentType, data.length
+    );
+    await ctx.session.storage.putJson(fileResult.meta.path, fileResult.file.toJson());
+    console.log(chalk.dim(`  File created: ${fileResult.meta.url}`));
+
+    attachments.push(fileResult.meta.url);
+  }
+  return attachments;
+}
+
 export function registerPostCommands(program: Command): void {
   const post = program.command("post").description("Manage posts");
 
@@ -41,40 +73,7 @@ export function registerPostCommands(program: Command): void {
 
         if (opts.image) {
           kind = PubkyAppPostKind.Image;
-          attachments = [];
-
-          for (const imgPath of opts.image) {
-            const absPath = path.resolve(imgPath);
-            const data = fs.readFileSync(absPath);
-            const ext = path.extname(absPath).toLowerCase();
-            const mimeMap: Record<string, string> = {
-              ".jpg": "image/jpeg",
-              ".jpeg": "image/jpeg",
-              ".png": "image/png",
-              ".gif": "image/gif",
-              ".webp": "image/webp",
-              ".svg": "image/svg+xml",
-            };
-            const contentType = mimeMap[ext] || "application/octet-stream";
-            const fileName = path.basename(absPath);
-
-            // Upload blob
-            const blobResult = ctx.specs.createBlob(Array.from(new Uint8Array(data)));
-            await ctx.session.storage.putBytes(blobResult.meta.path, new Uint8Array(data));
-            console.log(chalk.dim(`  Blob uploaded: ${blobResult.meta.url}`));
-
-            // Create file entry
-            const fileResult = ctx.specs.createFile(
-              fileName,
-              blobResult.meta.url,
-              contentType,
-              data.length
-            );
-            await ctx.session.storage.putJson(fileResult.meta.path, fileResult.file.toJson());
-            console.log(chalk.dim(`  File created: ${fileResult.meta.url}`));
-
-            attachments.push(fileResult.meta.url);
-          }
+          attachments = await uploadImages(ctx, opts.image);
         }
 
         const { post, meta } = ctx.specs.createPost(
@@ -99,16 +98,25 @@ export function registerPostCommands(program: Command): void {
     .argument("<post-uri>", "URI of the post to reply to")
     .argument("[content]", "Reply content (supports \\n for newlines)")
     .option("-f, --file <path>", "Read content from a file instead")
+    .option("--image <paths...>", "Attach images (local file paths)")
     .action(async (postUri: string, content: string | undefined, opts: any) => {
       const body = resolveContent(content, opts.file);
 
       await withSession(async (ctx) => {
+        let kind = PubkyAppPostKind.Short;
+        let attachments: string[] | null = null;
+
+        if (opts.image) {
+          kind = PubkyAppPostKind.Image;
+          attachments = await uploadImages(ctx, opts.image);
+        }
+
         const { post, meta } = ctx.specs.createPost(
           body,
-          PubkyAppPostKind.Short,
+          kind,
           postUri,
           null,
-          null
+          attachments
         );
         await ctx.session.storage.putJson(meta.path, post.toJson());
 
