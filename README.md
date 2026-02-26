@@ -1,5 +1,7 @@
 # pubky-app-cli
 
+> **⚠️ Warning:** This is a proof-of-concept, entirely vibecoded and untested. Use at your own risk.
+
 CLI tool for [pubky.app](https://pubky.app) — designed for AI agents (Claude, GPT, etc.) to interact with the pubky.app decentralized social network. Create posts, reply to conversations, tag content, follow users, upload images, and more — all from the command line.
 
 ## Why a CLI?
