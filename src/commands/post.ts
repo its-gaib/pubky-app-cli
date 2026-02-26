@@ -1,9 +1,22 @@
 import { Command } from "commander";
-import { PubkyAppPostKind } from "pubky-app-specs";
+import { PubkyAppPostKind, PubkyAppPost } from "pubky-app-specs";
 import * as fs from "fs";
 import * as path from "path";
 import chalk from "chalk";
 import { withSession, withPublicAccess, getPublicKeyZ32 } from "../client";
+
+function resolveContent(content: string | undefined, fileOpt: string | undefined): string {
+  if (fileOpt) {
+    const absPath = path.resolve(fileOpt);
+    return fs.readFileSync(absPath, "utf-8").trimEnd();
+  }
+  if (!content) {
+    console.error("Provide content as an argument or use --file <path>");
+    process.exit(1);
+  }
+  // Process escape sequences so users can write \n for newlines
+  return content.replace(/\\n/g, "\n");
+}
 
 export function registerPostCommands(program: Command): void {
   const post = program.command("post").description("Manage posts");
@@ -11,11 +24,14 @@ export function registerPostCommands(program: Command): void {
   post
     .command("create")
     .description("Create a new post")
-    .argument("<content>", "Post content")
+    .argument("[content]", "Post content (supports \\n for newlines)")
+    .option("-f, --file <path>", "Read content from a file instead")
     .option("--long", "Create a long-form post")
     .option("--image <paths...>", "Attach images (local file paths)")
     .option("--link", "Create a link post")
-    .action(async (content: string, opts: any) => {
+    .action(async (content: string | undefined, opts: any) => {
+      const body = resolveContent(content, opts.file);
+
       await withSession(async (ctx) => {
         let kind = PubkyAppPostKind.Short;
         let attachments: string[] | null = null;
@@ -62,7 +78,7 @@ export function registerPostCommands(program: Command): void {
         }
 
         const { post, meta } = ctx.specs.createPost(
-          content,
+          body,
           kind,
           null,
           null,
@@ -73,7 +89,6 @@ export function registerPostCommands(program: Command): void {
         console.log(chalk.green("Post created!"));
         console.log(`  ID: ${meta.id}`);
         console.log(`  URI: ${meta.url}`);
-        console.log(`  Web: https://pubky.app/profile/${ctx.z32}/posts/${meta.id}`);
       });
     });
 
@@ -81,11 +96,14 @@ export function registerPostCommands(program: Command): void {
     .command("reply")
     .description("Reply to a post")
     .argument("<post-uri>", "URI of the post to reply to")
-    .argument("<content>", "Reply content")
-    .action(async (postUri: string, content: string) => {
+    .argument("[content]", "Reply content (supports \\n for newlines)")
+    .option("-f, --file <path>", "Read content from a file instead")
+    .action(async (postUri: string, content: string | undefined, opts: any) => {
+      const body = resolveContent(content, opts.file);
+
       await withSession(async (ctx) => {
         const { post, meta } = ctx.specs.createPost(
-          content,
+          body,
           PubkyAppPostKind.Short,
           postUri,
           null,
@@ -97,6 +115,29 @@ export function registerPostCommands(program: Command): void {
         console.log(`  ID: ${meta.id}`);
         console.log(`  URI: ${meta.url}`);
         console.log(`  In reply to: ${postUri}`);
+      });
+    });
+
+  post
+    .command("edit")
+    .description("Edit an existing post's content")
+    .argument("<post-id>", "ID of the post to edit")
+    .argument("[content]", "New content (supports \\n for newlines)")
+    .option("-f, --file <path>", "Read new content from a file instead")
+    .action(async (postId: string, content: string | undefined, opts: any) => {
+      const newContent = resolveContent(content, opts.file);
+
+      await withSession(async (ctx) => {
+        const postPath = `/pub/pubky.app/posts/${postId}`;
+        const existing = await ctx.session.storage.getJson(postPath);
+        const originalPost = PubkyAppPost.fromJson(existing);
+
+        const { post, meta } = ctx.specs.editPost(originalPost, postId, newContent);
+        await ctx.session.storage.putJson(meta.path, post.toJson());
+
+        console.log(chalk.green("Post edited!"));
+        console.log(`  ID: ${meta.id}`);
+        console.log(`  URI: ${meta.url}`);
       });
     });
 
