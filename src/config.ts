@@ -14,15 +14,26 @@ export function getConfigPath(): string {
   return CONFIG_FILE;
 }
 
+let configOverrides: Partial<Config> = {};
+
+export function setConfigOverrides(overrides: Partial<Config>): void {
+  configOverrides = overrides;
+}
+
 export function loadConfig(): Config {
-  if (!fs.existsSync(CONFIG_FILE)) {
+  let fileConfig: Partial<Config> = {};
+
+  if (fs.existsSync(CONFIG_FILE)) {
+    const raw = fs.readFileSync(CONFIG_FILE, "utf-8");
+    fileConfig = JSON.parse(raw);
+  } else if (Object.keys(configOverrides).length === 0) {
     console.error(
       `No config found. Run: pubky-app config set --seed "your seed phrase" --homeserver "homeserver_pk"`
     );
     process.exit(1);
   }
-  const raw = fs.readFileSync(CONFIG_FILE, "utf-8");
-  return JSON.parse(raw) as Config;
+
+  return { ...fileConfig, ...configOverrides } as Config;
 }
 
 export function saveConfig(config: Partial<Config>): void {

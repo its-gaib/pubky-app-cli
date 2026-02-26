@@ -26,6 +26,20 @@ node dist/index.js config set \
 
 Config is stored at `~/.config/pubky-app-cli/config.json`.
 
+### Per-command overrides
+
+You can pass `--seed` and `--homeserver` as global flags to any command. When provided, they override the values from the config file:
+
+```bash
+# Use a different seed for this command only
+pubky-app --seed "other twelve word phrase here ok sure" post list
+
+# Override both seed and homeserver
+pubky-app --seed "..." --homeserver "other_pk" post create "Hello from another account"
+```
+
+This lets you operate multiple accounts without switching the config file, or skip config setup entirely if you pass both flags.
+
 ## Commands
 
 All commands are run with `node dist/index.js` (or `pubky-app` if linked globally with `npm link`).

@@ -2,7 +2,7 @@
 
 import { Command } from "commander";
 import chalk from "chalk";
-import { saveConfig, showConfig } from "./config";
+import { saveConfig, showConfig, setConfigOverrides } from "./config";
 import { registerPostCommands } from "./commands/post";
 import { registerProfileCommands } from "./commands/profile";
 import { registerTagCommands } from "./commands/tag";
@@ -15,7 +15,9 @@ const program = new Command();
 program
   .name("pubky-app")
   .description("CLI tool for pubky.app - decentralized social networking")
-  .version("1.0.0");
+  .version("1.0.0")
+  .option("--seed <phrase>", "BIP39 seed phrase (overrides config file)")
+  .option("--homeserver <pk>", "Homeserver public key (overrides config file)");
 
 // Config commands
 const config = program.command("config").description("Manage configuration");
@@ -55,8 +57,16 @@ registerFollowCommands(program);
 registerBookmarkCommands(program);
 registerFileCommands(program);
 
-// Handle errors gracefully
-program.hook("preAction", () => {});
+// Apply CLI flag overrides before any command runs
+program.hook("preAction", () => {
+  const opts = program.opts();
+  const overrides: any = {};
+  if (opts.seed) overrides.seed = opts.seed;
+  if (opts.homeserver) overrides.homeserver = opts.homeserver;
+  if (Object.keys(overrides).length > 0) {
+    setConfigOverrides(overrides);
+  }
+});
 
 program.parseAsync(process.argv).catch((err) => {
   console.error(chalk.red(`Error: ${err.message}`));
